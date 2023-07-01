@@ -30,7 +30,6 @@ dev = [
   "pytest",
   "pytest-asyncio",
   "moto",
-  "boto3",
 ]
 
 [tool.setuptools_scm]
