@@ -69,7 +69,9 @@ def test_get_most_detected_class():
         ),
     ]
 
-    most_detected_class, detected_frames = get_most_detected_class(frames)
+    most_detected_class, detected_frames = get_most_detected_class(
+        frames, ["X", "Y", "Z"]
+    )
 
     assert most_detected_class == "X"
     assert len(detected_frames) == 4
@@ -79,3 +81,52 @@ def test_get_most_detected_class():
         assert frame.predictions[0].label == most_detected_class
 
     assert detected_frames[0].predictions[0].confidence == approx(0.97)
+
+
+def test_get_most_detected_class_filter():
+    # If we ask for X and Y, but Z is also present, we just want X or Y
+    frames = [
+        AnnotatedFrame(
+            key="frame1.png",
+            source=VideoFile(key="test.mp4"),
+            model_name="test_model",
+            predictions=[
+                Prediction(x=1, y=2, width=4, height=10, confidence=0.97, label="X"),
+                Prediction(x=5, y=6, width=8, height=12, confidence=0.50, label="X"),
+                Prediction(x=9, y=10, width=11, height=12, confidence=0.30, label="Z"),
+            ],
+        ),
+        AnnotatedFrame(
+            key="frame2.png",
+            source=VideoFile(key="test.mp4"),
+            model_name="test_model",
+            predictions=[
+                Prediction(x=3, y=4, width=5, height=6, confidence=0.77, label="Y"),
+                Prediction(x=7, y=8, width=9, height=10, confidence=0.53, label="X"),
+                Prediction(x=9, y=10, width=11, height=12, confidence=0.30, label="Z"),
+            ],
+        ),
+        AnnotatedFrame(
+            key="frame3.png",
+            source=VideoFile(key="test.mp4"),
+            model_name="test_model",
+            predictions=[
+                Prediction(x=5, y=6, width=7, height=8, confidence=0.42, label="X"),
+                Prediction(x=9, y=10, width=11, height=12, confidence=0.30, label="Z"),
+            ],
+        ),
+        AnnotatedFrame(
+            key="frame4.png",
+            source=VideoFile(key="test.mp4"),
+            model_name="test_model",
+            predictions=[
+                Prediction(x=1, y=2, width=3, height=4, confidence=0.85, label="X"),
+                Prediction(x=9, y=10, width=11, height=12, confidence=0.24, label="Y"),
+                Prediction(x=9, y=10, width=11, height=12, confidence=0.30, label="Z"),
+            ],
+        ),
+    ]
+
+    most_detected_class, detected_frames = get_most_detected_class(frames, ["X", "Y"])
+
+    assert most_detected_class == "X"

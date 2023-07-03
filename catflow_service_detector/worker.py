@@ -21,11 +21,15 @@ import numpy as np
 import logging
 
 
-def get_most_detected_class(frames: AnnotatedFrame) -> Tuple[str, AnnotatedFrame]:
+def get_most_detected_class(
+    frames: AnnotatedFrame, classes
+) -> Tuple[str, AnnotatedFrame]:
     # Find the most detected class
     detections = Counter()
     for frame in frames:
-        detected_labels = set([x.label for x in frame.predictions])
+        detected_labels = set(
+            [x.label for x in frame.predictions if x.label in classes]
+        )
         for label in detected_labels:
             detections[label] += 1
 
@@ -130,7 +134,9 @@ def create_detector_handler(notifier, classes_of_interest):
         # Get the class w/ the most detections, and the frames it was detected in.
         # detected_frames is a list of AnnotatedFrame, now with exactly 1 prediction per
         # frame.
-        most_detected_class, detected_frames = get_most_detected_class(interest_frames)
+        most_detected_class, detected_frames = get_most_detected_class(
+            interest_frames, classes_of_interest
+        )
 
         logging.info(
             "[-] Detected {l} in {n} of {N} frames".format(
