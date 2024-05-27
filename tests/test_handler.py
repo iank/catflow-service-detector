@@ -1,6 +1,6 @@
 import pytest
 from catflow_service_detector.worker import create_detector_handler
-from moto import mock_s3
+from moto import mock_aws
 import boto3
 import io
 from catflow_worker.types import (
@@ -57,7 +57,7 @@ def s3_client():
     # Get data file
     image = "tests/test_files/car.png"
 
-    with mock_s3():
+    with mock_aws():
         s3 = AsyncS3Wrapper()
 
         # Push it to mock S3 so our worker can retrieve it
