@@ -87,27 +87,23 @@ def draw_detection(frame, predictions):
 class Notifier:
     """Notification handler"""
 
-    def __init__(self, base_url, source, dest):
+    def __init__(self, base_url, chat_id):
         self.base_url = base_url
-        self.source = source
-        self.dest = dest
+        self.chat_id = chat_id
 
     async def notify(self, image, label):
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        image_base64 = base64.b64encode(image).decode()
-
-        json_payload = {
-            "message": f"Detected {label} at {timestamp}",
-            "base64_attachments": [image_base64],
-            "number": self.source,
-            "recipients": [self.dest],
-        }
+        caption = f"Detected {label} at {timestamp}"
 
         async with aiohttp.ClientSession() as session:
+            data = aiohttp.FormData()
+            data.add_field('chat_id', self.chat_id)
+            data.add_field('photo', image)
+            data.add_field('caption', caption)
+
             async with session.post(
-                f"{self.base_url}/v2/send",
-                json=json_payload,
-                headers={"Content-Type": "application/json"},
+                f"{self.base_url}/sendPhoto",
+                data=data
             ) as resp:
                 logging.info(f"Response status: {resp.status}")
                 logging.info(await resp.text())
@@ -180,12 +176,11 @@ async def shutdown(worker, task):
 
 async def startup(queue: str, topic_key: str):
     # Set up DB
-    base_url = os.environ["CATFLOW_SIGNAL_URL"]
-    source = os.environ["CATFLOW_SIGNAL_SOURCE"]
-    dest = os.environ["CATFLOW_SIGNAL_DEST"]
+    base_url = os.environ["CATFLOW_TELEGRAM_URL"]
+    chat_id = os.environ["CATFLOW_TELEGRAM_CHAT"]
     classes = os.environ["CATFLOW_DETECTOR_CLASSES"].split(",")
 
-    notifier = Notifier(base_url, source, dest)
+    notifier = Notifier(base_url, chat_id)
     detector_handler = create_detector_handler(notifier, classes)
 
     # Start worker
